@@ -17,16 +17,16 @@
 
 namespace App;
 
-use Exception;
 use File;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Support\Collection;
 
 class DNSZoneFileParser
 {
     /**
-     * Contains all the records in this zone.
+     * Contains a Collection of records in this zone.
      *
-     * An unindexed array of Resource Records (RR's) for this zone. Each item is a separate array representing a RR.
+     * Collection of Resource Records (RR's) for this zone. Each item is a separate array representing a RR.
      *
      * Each RR item is an array:
      *
@@ -40,7 +40,7 @@ class DNSZoneFileParser
      *
      * @var array
      */
-    private $records = array();
+    private $records;
 
     /**
      * Zone data of the loaded zone.
@@ -74,58 +74,54 @@ class DNSZoneFileParser
         'default_ttl'  => null,
     ];
 
-    public function parseZoneFile(string $location) {
-        return $this->readZoneFileFromFileSystem($location);
+    public function __construct()
+    {
+        $this->records = new Collection();
     }
 
-    public function readZoneFileFromFileSystem(string $location)
+    public function readZoneFromFileSystem(string $location): int
     {
         try {
             $zoneContents = File::get($location);
         } catch (\Exception $e) {
-            throw new FileNotFoundException('Unable to read file: ' . $location);
+            throw new FileNotFoundException('Unable to read Zone file: ' . $location);
         }
 
         return $this->processZoneFile($zoneContents);
     }
 
-    public function getRecords()
+    public function processZoneFile(string $zoneContents): int
     {
-        return $this->records;
-    }
-
-    public function processZoneFile(string $zoneContents)
-    {
-        $zoneContents = $this->filterZoneContent($zoneContents);
+        // Remove comments from contents
+        $zoneContents = $this->filterComments($zoneContents);
 
         // We will parse contents line by line.
         $zoneContents = explode(PHP_EOL, $zoneContents);
-        $count = 0;
         foreach ($zoneContents as $line) {
             // Remove multiple spaces and tabs.
             $line = preg_replace('/\s+/', ' ', $line);
             if (!empty($line)) {
                 $record = $this->parseResourceRecord($line);
-                $count++;
-                $this->records[] = $record;
+                $this->records->push($record);
             }
         }
-        return $count;
+
+        return $this->records->count();
     }
 
     /**
-     * Remove comments Zone contents.
+     * Remove comments from Zone file contents
+     *
+     * - Comment lines start with a ';' character.
      *
      * @param string $content
      *
      * @return string
      */
-    private function filterZoneContent(string $content): string
+    private function filterComments(string $content): string
     {
         // A semicolon (';') starts a comment; the remainder of the line is ignored.
         return preg_replace('/(;.*)$/m', '', $content);
-
-
     }
 
     /**
@@ -137,17 +133,19 @@ class DNSZoneFileParser
      */
     private function parseResourceRecord(string $line): array
     {
-        $items = explode(' ', $line, 5);
+        list($name, $ttl, $class, $type, $data) = explode(' ', $line, 5);
 
-        $record = [];
-        $record['name'] = $items[0];
-        $record['ttl'] = $items[1];
-        $record['class'] = $items[2];
-        $record['type'] = $items[3];
-        $record['data'] = $items[4];
-
-        return $record;
+        return [
+            'name'  => mb_strtolower($name),
+            'ttl'   => (int)$ttl,
+            'class' => mb_strtoupper($class),
+            'type'  => mb_strtoupper($type),
+            'data'  => $data,
+        ];
     }
 
-
+    public function getRecords(): Collection
+    {
+        return $this->records;
+    }
 }

@@ -17,7 +17,7 @@
 
 use App\DNSZoneFileParser;
 
-class FileDNSParserUnitTest extends TestCase
+class DNSZoneFileParserUnitTest extends TestCase
 {
     protected $fileContents = '
 ; <<>> DiG 9.10.6 <<>> axfr domain.local
@@ -139,9 +139,9 @@ montsant.ad.domain.local.  172800  IN      A       10.11.197.54
             ->andReturn($this->fileContents);
 
         $zoneContents = new DNSZoneFileParser();
-        $zoneContents->parseZoneFile('location');
+        $zoneContents->readZoneFromFileSystem('location');
 
-        $records = $zoneContents->getRecords();
+        $records = $zoneContents->getRecords()->toArray();
         $expectedRecords = $this->expectedRecords;
 
         $this->assertEquals($expectedRecords, $records);
