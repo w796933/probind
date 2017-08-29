@@ -40,7 +40,7 @@ class AXFRZoneFileParser implements ZoneFileParserInterface
      *
      * @var Collection
      */
-    protected $records;
+    private $records;
 
     /**
      * Zone data of the loaded zone.
@@ -79,6 +79,11 @@ class AXFRZoneFileParser implements ZoneFileParserInterface
         $this->records = new Collection();
     }
 
+    public function getZoneData()
+    {
+        return $this->zoneData;
+    }
+
     public function parseFile(string $location): int
     {
         try {
@@ -90,7 +95,7 @@ class AXFRZoneFileParser implements ZoneFileParserInterface
         return $this->processZoneFile($zoneContents);
     }
 
-    public function processZoneFile(string $zoneContents): int
+    private function processZoneFile(string $zoneContents): int
     {
         // Remove comments from contents
         $zoneContents = $this->filterComments($zoneContents);
@@ -102,7 +107,11 @@ class AXFRZoneFileParser implements ZoneFileParserInterface
             $line = preg_replace('/\s+/', ' ', $line);
             if (!empty($line)) {
                 $record = $this->parseResourceRecord($line);
-                $this->records->push($record);
+                if ($record['type'] === "SOA") {
+                    $this->parseSOA($record);
+                } else {
+                    $this->records->push($record);
+                }
             }
         }
 
@@ -142,6 +151,27 @@ class AXFRZoneFileParser implements ZoneFileParserInterface
             'type'  => mb_strtoupper($type),
             'data'  => $data,
         ];
+    }
+
+    private function parseSOA(array $record)
+    {
+        /*
+         * Only one SOA per zone is possible. If it has been set, done!
+         *
+         * A second SOA is added by programs such as dig, to indicate the end of a zone.
+         */
+        if (empty($this->zoneData['domain'])) {
+            list($mname, $rname, $serial, $refresh, $retry, $expire, $negative_ttl) = explode(' ', $record['data']);
+
+            $this->zoneData['domain'] = $record['name'];
+            $this->zoneData['mname'] = $mname;
+            $this->zoneData['rname'] = $rname;
+            $this->zoneData['serial'] = $serial;
+            $this->zoneData['refresh'] = $refresh;
+            $this->zoneData['retry'] = $retry;
+            $this->zoneData['expire'] = $expire;
+            $this->zoneData['negative_ttl'] = $negative_ttl;
+        }
     }
 
     public function getRecords(): Collection
