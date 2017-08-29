@@ -1,147 +1,119 @@
 <?php
-/**
- * ProBIND v3 - Professional DNS management made easy.
- *
- * Copyright (c) 2017 by Paco Orozco <paco@pacoorozco.info>
- *
- * This file is part of some open source application.
- *
- * Licensed under GNU General Public License 3.0.
- * Some rights reserved. See LICENSE, AUTHORS.
- *
- * @author      Paco Orozco <paco@pacoorozco.info>
- * @copyright   2017 Paco Orozco
- * @license     GPL-3.0 <http://spdx.org/licenses/GPL-3.0>
- * @link        https://github.com/pacoorozco/probind
- */
 
-use App\DNSZoneFileParser;
+use App\Parsers\DNSZoneFileParser;
 
 class DNSZoneFileParserUnitTest extends TestCase
 {
     protected $fileContents = '
-; <<>> DiG 9.10.6 <<>> axfr domain.local
-;; global options: +cmd
-domain.local.              172800  IN      SOA     dns1.domain.com. hostmaster.domain.local. 2017082401 1800 900 1814400 7200
-domain.local.              3600    IN      TXT     "MS=ms12345678"
-domain.local.              172800  IN      NAPTR   30 0 "s" "SIP+D2U" "" _sip._udp.domain.local.
-domain.local.              3600  IN      MX      10 mx1.domain-ext.local.
-domain.local.              3600  IN      MX      10 mx2.domain-ext.local.
-domain.local.              172800  IN      NS      dns1.domain.com.
-domain.local.              172800  IN      NS      dns2.domain.com.
-_sip._udp.domain.local.    3600    IN      SRV     0 0 5060 montsec.domain-ext.local.
-ad.domain.local.           172800  IN      NS      dns3.domain.com.
-ad.domain.local.           172800  IN      NS      dns2.domain.com.
-picaestats.domain.local.   172800  IN      CNAME   contraix.domain.local.
-montsant.ad.domain.local.  172800  IN      A       10.11.197.54
-;; Query time: 2 msec
-;; SERVER: 10.11.2.3#53(10.11.2.3)
-;; WHEN: Sat Aug 26 08:30:21 CEST 2017
-;; XFR size: 16 records (messages 1, bytes 103)
+; This is a comment
+$TTL 172800
+@               IN      SOA     dns1.domain.com. hostmaster.domain.col. (
+                                        2016080401      ; serial (aaaammddvv)
+                                        86400           ; Refresh
+                                        7200            ; Retry
+                                        3628800         ; Expire
+                                        7200 )  ; Minimum TTL
+                                IN      NS      dns1.domain.com.
+                                IN      NS      dns2.domain.com.
+@                                               IN      MX      10 10.10.10.1
+@                                       7200    IN      MX      20 10.10.10.2
+
+ftp                                     7200    IN      A       10.10.10.3
+www                                     7200    IN      CNAME   webserver.domain.com.
+; webserver.domain.com.                   7200    IN      A       10.10.10.4
+
+$ORIGIN subdomain
+www1                                    7200    IN      A       10.10.10.10
+                                                IN      A       10.10.10.11
+text                                    7200    IN      TXT     "Somewhere over the rainbow"
 ';
     protected $expectedRecords = [
 
         [
-            'name'  => 'domain.local.',
-            'ttl'   => 172800,
-            'class' => 'IN',
-            'type'  => 'SOA',
-            'data'  => 'dns1.domain.com. hostmaster.domain.local. 2017082401 1800 900 1814400 7200',
-        ],
-        [
-            'name'  => 'domain.local.',
-            'ttl'   => 3600,
-            'class' => 'IN',
-            'type'  => 'TXT',
-            'data'  => '"MS=ms12345678"',
-        ],
-        [
-            'name'  => 'domain.local.',
-            'ttl'   => 172800,
-            'class' => 'IN',
-            'type'  => 'NAPTR',
-            'data'  => '30 0 "s" "SIP+D2U" "" _sip._udp.domain.local.',
-        ],
-        [
-            'name'    => 'domain.local.',
-            'ttl'     => 3600,
-            'class'   => 'IN',
-            'type'    => 'MX',
-            'data'    => '10 mx1.domain-ext.local.',
-        ],
-        [
-            'name'    => 'domain.local.',
-            'ttl'     => 3600,
-            'class'   => 'IN',
-            'type'    => 'MX',
-            'data'    => '10 mx2.domain-ext.local.',
-        ],
-        [
-            'name'  => 'domain.local.',
+            'name'  => '@',
             'ttl'   => 172800,
             'class' => 'IN',
             'type'  => 'NS',
             'data'  => 'dns1.domain.com.',
         ],
         [
-            'name'  => 'domain.local.',
+            'name'  => '@',
             'ttl'   => 172800,
             'class' => 'IN',
             'type'  => 'NS',
             'data'  => 'dns2.domain.com.',
         ],
         [
-            'name'  => '_sip._udp.domain.local.',
-            'ttl'   => 3600,
-            'class' => 'IN',
-            'type'  => 'SRV',
-            'data'  => '0 0 5060 montsec.domain-ext.local.',
+            'name'    => '@',
+            'ttl'     => 172800,
+            'class'   => 'IN',
+            'type'    => 'MX',
+            'data'    => '10.10.10.1',
+            'options' => [
+                'preference' => '10',
+            ],
         ],
         [
-            'name'  => 'ad.domain.local.',
-            'ttl'   => 172800,
-            'class' => 'IN',
-            'type'  => 'NS',
-            'data'  => 'dns3.domain.com.',
+            'name'    => '@',
+            'ttl'     => 7200,
+            'class'   => 'IN',
+            'type'    => 'MX',
+            'data'    => '10.10.10.2',
+            'options' => [
+                'preference' => '20',
+            ],
         ],
         [
-            'name'  => 'ad.domain.local.',
-            'ttl'   => 172800,
+            'name'  => 'ftp',
+            'ttl'   => 7200,
             'class' => 'IN',
-            'type'  => 'NS',
-            'data'  => 'dns2.domain.com.',
+            'type'  => 'A',
+            'data'  => '10.10.10.3',
         ],
         [
-            'name'  => 'picaestats.domain.local.',
-            'ttl'   => 172800,
+            'name'  => 'www',
+            'ttl'   => 7200,
             'class' => 'IN',
             'type'  => 'CNAME',
-            'data'  => 'contraix.domain.local.',
+            'data'  => 'webserver.domain.com.',
         ],
         [
-            'name'  => 'montsant.ad.domain.local.',
+            'name'  => 'www1.subdomain',
+            'ttl'   => 7200,
+            'class' => 'IN',
+            'type'  => 'A',
+            'data'  => '10.10.10.10',
+        ],
+        [
+            'name'  => 'www1.subdomain',
             'ttl'   => 172800,
             'class' => 'IN',
             'type'  => 'A',
-            'data'  => '10.11.197.54',
+            'data'  => '10.10.10.11',
         ],
-
+        [
+            'name'  => 'text.subdomain',
+            'ttl'   => 7200,
+            'class' => 'IN',
+            'type'  => 'TXT',
+            'data'  => '"Somewhere over the rainbow"',
+        ]
     ];
 
     /**
      * Test RFC 1033 file parser.
      */
-    public function testParseZoneFile()
+    public function testLoad()
     {
         // Mock Filesystem with $this->fileContents.
         File::shouldReceive('get')
-            ->with('location')
+            ->with('zonefile')
             ->andReturn($this->fileContents);
 
-        $zoneContents = new DNSZoneFileParser();
-        $zoneContents->readZoneFromFileSystem('location');
+        $fileDNS = new DNSZoneFileParser('domain.com');
+        $fileDNS->parseFile('zonefile');
 
-        $records = $zoneContents->getRecords()->toArray();
+        $records = $fileDNS->getRecords()->toArray();
         $expectedRecords = $this->expectedRecords;
 
         $this->assertEquals($expectedRecords, $records);

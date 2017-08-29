@@ -15,13 +15,13 @@
  * @link        https://github.com/pacoorozco/probind
  */
 
-namespace App;
+namespace App\Parsers;
 
 use File;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Support\Collection;
 
-class DNSZoneFileParser
+class AXFRZoneFileParser implements ZoneFileParserInterface
 {
     /**
      * Contains a Collection of records in this zone.
@@ -38,9 +38,9 @@ class DNSZoneFileParser
      *  'data'      => '10 10.10.10.1',
      * ];
      *
-     * @var array
+     * @var Collection
      */
-    private $records;
+    protected $records;
 
     /**
      * Zone data of the loaded zone.
@@ -79,7 +79,7 @@ class DNSZoneFileParser
         $this->records = new Collection();
     }
 
-    public function readZoneFromFileSystem(string $location): int
+    public function parseFile(string $location): int
     {
         try {
             $zoneContents = File::get($location);

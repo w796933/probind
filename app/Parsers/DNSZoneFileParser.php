@@ -1,11 +1,27 @@
 <?php
+/**
+ * ProBIND v3 - Professional DNS management made easy.
+ *
+ * Copyright (c) 2017 by Paco Orozco <paco@pacoorozco.info>
+ *
+ * This file is part of some open source application.
+ *
+ * Licensed under GNU General Public License 3.0.
+ * Some rights reserved. See LICENSE, AUTHORS.
+ *
+ * @author      Paco Orozco <paco@pacoorozco.info>
+ * @copyright   2017 Paco Orozco
+ * @license     GPL-3.0 <http://spdx.org/licenses/GPL-3.0>
+ * @link        https://github.com/pacoorozco/probind
+ */
 
-namespace App;
+namespace App\Parsers;
 
 use App\Helpers\TimeHelper;
 use Exception;
 use File;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Support\Collection;
 
 
 /**
@@ -25,7 +41,7 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
  * @link       http://www.rfc-editor.org/rfc/rfc1537.txt
  * @link       http://www.rfc-editor.org/rfc/rfc2308.txt
  */
-class FileDNSParser
+class DNSZoneFileParser implements ZoneFileParserInterface
 {
 
     /**
@@ -65,9 +81,10 @@ class FileDNSParser
      *                  ],
      * ];
      *
-     * @var array
+     * @var Collection
      */
-    private $records = array();
+    protected $records;
+
     /**
      * Zone data of the loaded zone.
      *
@@ -101,12 +118,13 @@ class FileDNSParser
     ];
 
     /**
-     * FileDNSParser constructor.
+     * DNSZoneFileParser constructor.
      *
      * @param string $domain Domain name of this zone.
      */
     public function __construct(string $domain)
     {
+        $this->records = new Collection();
         $this->zoneData['domain'] = $domain;
     }
 
@@ -145,15 +163,15 @@ class FileDNSParser
      *
      * $records = $fileDNS->getRecords();
      *
-     * @return array
+     * @return Collection
      */
-    public function getRecords(): array
+    public function getRecords(): Collection
     {
-        $another = [];
+        $another = new Collection();
         foreach ($this->records as $record) {
             $record['name'] = preg_replace('/\.' . $this->zoneData['domain'] . '\.$/', '', $record['name']);
             $record['name'] = preg_replace('/' . $this->zoneData['domain'] . '\.$/', '@', $record['name']);
-            $another[] = $record;
+            $another->push($record);
         }
         return $another;
     }
@@ -163,10 +181,10 @@ class FileDNSParser
      *
      * @param string $zonefile filename of zonefile to load.
      *
-     * @return bool
+     * @return int
      * @throws FileNotFoundException
      */
-    public function load(string $zonefile): bool
+    public function parseFile(string $zonefile): int
     {
         try {
             $zone = File::get($zonefile);
@@ -247,7 +265,7 @@ class FileDNSParser
             }
         }
 
-        return true;
+        return $this->records->count();
     }
 
     /**

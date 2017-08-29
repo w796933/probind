@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\FileDNSParser;
+use App\Parsers\DNSZoneFileParser;
 use App\Zone;
 use Illuminate\Console\Command;
 
@@ -60,8 +60,8 @@ class ProBINDImportZone extends Command
         $domain = (string)$this->argument('zone');
         $zonefile = (string)$this->argument('zonefile');
 
-        $fileDNS = new FileDNSParser($domain);
-        $fileDNS->load($zonefile);
+        $fileDNS = new DNSZoneFileParser($domain);
+        $fileDNS->parseFile($zonefile);
 
         if (!$this->option('force')) {
             // Check if Zone exists on database.
@@ -87,7 +87,7 @@ class ProBINDImportZone extends Command
         $zone->save();
 
         // Associate parsed RR
-        $records = $fileDNS->getRecords();
+        $records = $fileDNS->getRecords()->toArray();
         foreach ($records as $item) {
             $zone->records()->create([
                 'name'     => $item['name'],
