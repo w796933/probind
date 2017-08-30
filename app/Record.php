@@ -120,16 +120,6 @@ class Record extends Model
     }
 
     /**
-     * Set the Record's data lowercase.
-     *
-     * @param  string $value
-     */
-    public function setDataAttribute(string $value)
-    {
-        $this->attributes['data'] = strtolower($value);
-    }
-
-    /**
      * A record belongs to a zone.
      *
      * This is a one-to-one relationship.
