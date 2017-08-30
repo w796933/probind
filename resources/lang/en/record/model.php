@@ -28,10 +28,13 @@ return [
     'types_mapper'  => [
         'A'     => 'A (IPv4 address)',
         'AAAA'  => 'AAAA (IPv6 address)',
+        'CAA'   => 'CAA (certification authority authorization)',
         'CNAME' => 'CNAME (canonical name)',
         'MX'    => 'MX (mail exchange)',
+        'NAPTR' => 'NAPTR (name authority pointer)',
         'NS'    => 'NS (name server)',
         'PTR'   => 'PTR (pointer)',
+        'SPF'   => 'SPF (sender policy framework)',
         'SRV'   => 'SRV (service locator)',
         'TXT'   => 'TXT (text)',
     ],
