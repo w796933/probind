@@ -15,20 +15,20 @@
  * @link        https://github.com/pacoorozco/probind
  */
 
-namespace App\Models\DNS\RData;
+namespace App\Models\DNS\Rdata;
 
 
-interface RDataInterface
+interface RdataInterface
 {
     /**
      * @return string
      */
-    public function output();
+    public function output(): string;
 
     /**
      * Get the R-Data type.
      *
      * @return string
      */
-    public function getType();
+    public function getType(): string;
 }

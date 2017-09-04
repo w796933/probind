@@ -17,7 +17,7 @@
 
 namespace App\Models\DNS;
 
-use App\Models\DNS\RData\RDataInterface;
+use App\Models\DNS\Rdata\RdataInterface;
 
 interface ResourceRecordInterface
 {
@@ -35,14 +35,14 @@ interface ResourceRecordInterface
     public function getName(): string;
 
     /**
-     * @param RDataInterface $rData
+     * @param RdataInterface $rData
      */
-    public function setRData(RDataInterface $rData);
+    public function setRData(RdataInterface $rData);
 
     /**
-     * @return RDataInterface
+     * @return RdataInterface
      */
-    public function getRData(): RDataInterface;
+    public function getRData(): RdataInterface;
 
     /**
      * Set the time to live.

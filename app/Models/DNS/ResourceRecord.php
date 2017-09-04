@@ -17,7 +17,7 @@
 
 namespace App\Models\DNS;
 
-use App\Models\DNS\RData\RDataInterface;
+use App\Models\DNS\Rdata\RdataInterface;
 
 class ResourceRecord implements ResourceRecordInterface
 {
@@ -29,7 +29,7 @@ class ResourceRecord implements ResourceRecordInterface
      */
     private $class;
     /**
-     * @var RDataInterface
+     * @var RdataInterface
      */
     private $RData;
     /**
@@ -46,15 +46,15 @@ class ResourceRecord implements ResourceRecordInterface
     private $comment;
 
     /**
-     * @param string $name
-     * @param RDataInterface $RData
-     * @param int $ttl
-     * @param string $class
-     * @param string $comment
+     * @param string         $name
+     * @param RdataInterface $RData
+     * @param int            $ttl
+     * @param string         $class
+     * @param string         $comment
      */
     public function __construct(
         string $name = null,
-        RDataInterface $RData = null,
+        RdataInterface $RData = null,
         int $ttl = null,
         string $class = null,
         string $comment = null
@@ -142,17 +142,17 @@ class ResourceRecord implements ResourceRecordInterface
     }
 
     /**
-     * @return RDataInterface
+     * @return RdataInterface
      */
-    public function getRData(): RDataInterface
+    public function getRData(): RdataInterface
     {
         return $this->RData;
     }
 
     /**
-     * @param RDataInterface $RData
+     * @param RdataInterface $RData
      */
-    public function setRData(RDataInterface $RData)
+    public function setRData(RdataInterface $RData)
     {
         $this->RData = $RData;
     }
